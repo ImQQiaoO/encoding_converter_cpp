@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#pragma once
+
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -170,15 +172,15 @@ namespace utils {
         }
 
         template <typename T,
-                  typename = std::enable_if_t<std::is_fundamental_v<std::decay_t<T>>>>
-        ansi_ostream &operator<<(T &&value) {
+            typename = std::enable_if_t<std::is_fundamental_v<std::decay_t<T>>>>
+            ansi_ostream & operator<<(T &&value) {
             out << std::forward<T>(value);
             return *this;
         }
 
         template <typename T,
-                  typename = std::enable_if_t<!std::is_fundamental_v<std::decay_t<T>>>,
-                  typename = void>
+            typename = std::enable_if_t<!std::is_fundamental_v<std::decay_t<T>>>,
+            typename = void>
         ansi_ostream &operator<<(const T &value) {
             std::stringstream utf8ss;
             utf8ss << value;
@@ -207,7 +209,7 @@ namespace utils {
 
         explicit ansi_istream(std::istream &is) : in(is) {}
 
-        std::string get() {
+        std::string get() const {
             std::string line;
             std::getline(in, line);
             return ansi_to_utf8(line);
@@ -228,6 +230,93 @@ namespace utils {
 
     static ansi_istream ansi2utf_in(std::cin);
 
+    // OUT_RESET: 作为操纵器对象，避免函数名重载导致的歧义
+    struct out_reset_t {};
+    inline constexpr out_reset_t OUT_RESET {};
+    template <typename Stream>
+    inline Stream &operator<<(Stream &os, out_reset_t) {
+        os << "\033[0m";
+        return os;
+    }
+
+    template <typename Stream>
+    inline Stream &output(Stream &os) {
+        return os; // 仅返回原始流，不改变颜色
+    }
+
+    template <typename Stream, typename R, typename G, typename B>
+    inline Stream &output(Stream &os, R r, G g, B b) {
+        os << "\033[38;2;" << r << ';' << g << ';' << b << 'm';
+        return os;
+    }
+
+    // reset_put: 支持两种调用方式的实现
+    // 1. 直接作为操纵器：reset_put
+    // 2. 带参数的函数调用：reset_put(std::endl) 或 reset_put(utils::endl)
+
+    // 基础 reset_put 结构体（用于无参数情况）
+    struct rgb_end_tag_t {};
+
+    template <typename Stream>
+    inline Stream &operator<<(Stream &os, rgb_end_tag_t) {
+        os << "\033[0m";
+        return os;
+    }
+
+    // 为 utils::ansi_ostream 提供特化以避免与其成员模板产生二义性
+    inline utils::ansi_ostream &operator<<(utils::ansi_ostream &os, rgb_end_tag_t) {
+        os << "\033[0m";
+        return os;
+    }
+
+    // 用于存储任意操纵器的包装类
+    template <typename Manipulator>
+    struct rgb_end_with_manip_t {
+        Manipulator manip;
+        explicit rgb_end_with_manip_t(Manipulator m) : manip(std::move(m)) {}
+    };
+
+    // 为带操纵器的包装类定义输出操作符
+    template <typename Stream, typename Manipulator>
+    inline Stream &operator<<(Stream &os, const rgb_end_with_manip_t<Manipulator> &obj) {
+        os << "\033[0m";
+        return os << obj.manip;
+    }
+
+    // 为 utils::ansi_ostream 特化
+    template <typename Manipulator>
+    inline utils::ansi_ostream &operator<<(utils::ansi_ostream &os, const rgb_end_with_manip_t<Manipulator> &obj) {
+        os << "\033[0m";
+        return os << obj.manip;
+    }
+
+    // reset_put 函数对象：既可以直接使用，也可以作为函数调用
+    struct rgb_end_callable_t {
+        // 直接转换为 rgb_end_tag_t（用于 reset_put 直接使用的情况）
+        // 不要explicit，否则会导致 reset_put 失效
+        operator rgb_end_tag_t() const {
+            return {};
+        }
+
+        // 函数调用操作符，接受任何操纵器
+        template <typename Manipulator>
+        rgb_end_with_manip_t<Manipulator> operator()(Manipulator manip) const {
+            return rgb_end_with_manip_t<Manipulator>{manip};
+        }
+
+        // 特殊处理 std::endl 的重载
+        rgb_end_with_manip_t<std::ostream &(*)(std::ostream &)> operator()(std::ostream &(*manip)(std::ostream &)) const {
+            return rgb_end_with_manip_t<std::ostream & (*)(std::ostream &)>{manip};
+        }
+    };
+
+    inline constexpr rgb_end_callable_t reset_put {};
+
 }  // namespace utils
 
 #endif
+
+#define YELLOW_OUTPUT_START             "\033[93m"
+#define RED_OUTPUT_START                "\033[91m"
+#define RGB_OUTPUT_START(r, g, b)       "\033[38;2;" #r ";" #g ";" #b "m"
+#define OUT_RESET                       "\033[0m"

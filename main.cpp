@@ -35,4 +35,13 @@ int main() {
     std::string u8str = "测试";
     std::cout << utils::utf8_to_ansi(u8str) << '\n';
 
+    utils::output(std::cout) << "Hello" << utils::reset_put(std::endl);
+    utils::output(utils::utf2ansi_out) << "你好" << utils::reset_put(utils::endl);
+
+    utils::output(std::cout, 86,146,118) << "Hello" << utils::reset_put(std::endl);
+    utils::output(utils::utf2ansi_out, 182,185,98) << "你好" << utils::reset_put(utils::endl);
+    utils::output(std::cout, 86,146,118) << "Hello" << utils::reset_put << " World" << utils::reset_put(std::endl);
+
+    // 编译错误
+    // utils::output(std::cout, 182,185,98) << "Hello" << utils::output(std::cout, 86,146,118) << " World" << utils::reset_put(std::endl);
 }
