@@ -250,6 +250,31 @@ namespace utils {
         return os;
     }
 
+    // 三参数版本：返回一个可插入到流中的操纵器对象，并复用四参数实现
+    struct rgb_begin_tag_t {
+        int r;
+        int g;
+        int b;
+    };
+
+    // 将三参操纵器插入到任意标准输出流时，调用已有的四参实现
+    template <typename Stream>
+    inline Stream &operator<<(Stream &os, const rgb_begin_tag_t &t) {
+        return output(os, t.r, t.g, t.b);
+    }
+
+    // 为 utils::ansi_ostream 提供特化，避免与其成员模板产生二义性
+    inline utils::ansi_ostream &operator<<(utils::ansi_ostream &os, const rgb_begin_tag_t &t) {
+        output(os, t.r, t.g, t.b);
+        return os;
+    }
+
+    // 三参数 output：构造操纵器对象，颜色在插入到流时生效
+    template <typename R, typename G, typename B>
+    inline rgb_begin_tag_t output(R r, G g, B b) {
+        return rgb_begin_tag_t{static_cast<int>(r), static_cast<int>(g), static_cast<int>(b)};
+    }
+
     // reset_put: 支持两种调用方式的实现
     // 1. 直接作为操纵器：reset_put
     // 2. 带参数的函数调用：reset_put(std::endl) 或 reset_put(utils::endl)

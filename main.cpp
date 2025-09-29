@@ -42,6 +42,10 @@ int main() {
     utils::output(utils::utf2ansi_out, 182,185,98) << "你好" << utils::reset_put(utils::endl);
     utils::output(std::cout, 86,146,118) << "Hello" << utils::reset_put << " World" << utils::reset_put(std::endl);
 
-    // 编译错误
-    // utils::output(std::cout, 182,185,98) << "Hello" << utils::output(std::cout, 86,146,118) << " World" << utils::reset_put(std::endl);
+    // 链式变色输出（三参 output 作为操纵器，复用四参版本设置颜色）
+    utils::output(std::cout, 182,185,98) << "Hello" << utils::output(86,146,118) << " World" << utils::reset_put(std::endl);
+    utils::output(utils::utf2ansi_out, 182,185,98) << "你好" << utils::output(86,146,118) << " 世界" << utils::reset_put(utils::endl);
+
+    // 直接使用三参 output 作为操纵器会出现编译错误，这是符合预期的
+    // utils::output(255,0,0) << "Red" << utils::reset_put(std::endl);
 }
