@@ -8,6 +8,7 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <type_traits>
 
 #ifdef _WIN32
 #include <io.h>
@@ -248,6 +249,23 @@ namespace utils {
     inline Stream &output(Stream &os, R r, G g, B b) {
         os << "\033[38;2;" << r << ';' << g << ';' << b << 'm';
         return os;
+    }
+
+    // 完美转发版本：支持右值（临时）流，如 qDebug()
+    // 仅在传入为右值且非 const 时参与重载，避免与左值重载冲突
+    template <typename S,
+              std::enable_if_t<std::is_rvalue_reference_v<S &&> &&
+                                   !std::is_const_v<std::remove_reference_t<S>>, int> = 0>
+    inline S &&output(S &&os) {
+        return std::forward<S>(os);
+    }
+
+    template <typename S, typename R, typename G, typename B,
+              std::enable_if_t<std::is_rvalue_reference_v<S &&> &&
+                                   !std::is_const_v<std::remove_reference_t<S>>, int> = 0>
+    inline S &&output(S &&os, R r, G g, B b) {
+        os << "\033[38;2;" << r << ';' << g << ';' << b << 'm';
+        return std::forward<S>(os);
     }
 
     // 三参数版本：返回一个可插入到流中的操纵器对象，并复用四参数实现
