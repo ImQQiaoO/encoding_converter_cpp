@@ -14,7 +14,6 @@ public:
 };
 
 int main() {
-    
     std::string str = "你好！";
     utils::utf2ansi_out << str << '\n';
     utils::utf2ansi_out << "世界" << '\n';
@@ -52,9 +51,9 @@ int main() {
 
     // 宽字符输出
     {
-        utils::ConsoleUTF8Guard u8s;
+        utils::ConsoleUTF8Guard u8c;
         utils::output(std::wcout, 255, 0, 0) << L"红色文本" << utils::reset_put << std::endl;
-        utils::output(std::wcout) << L"默认文本" << std::endl;
+        utils::output(std::wcout) << L"默认文本" << utils::reset_put(std::endl<wchar_t, std::char_traits<wchar_t>>);
         std::string str2 = "测试";
         std::wcout << utils::utf8_to_wstring(str2) << std::endl;
     }
