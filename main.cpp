@@ -1,4 +1,5 @@
-﻿#include <iostream>
+﻿#include <fstream>
+#include <iostream>
 #include "Locale.hpp"
 
 class test {
@@ -48,4 +49,14 @@ int main() {
 
     // 直接使用三参 output 作为操纵器会出现编译错误，这是符合预期的
     // utils::output(255,0,0) << "Red" << utils::reset_put(std::endl);
+
+    // 宽字符输出
+    {
+        utils::ConsoleUTF8Guard u8s;
+        utils::output(std::wcout, 255, 0, 0) << L"红色文本" << utils::reset_put << std::endl;
+        utils::output(std::wcout) << L"默认文本" << std::endl;
+        std::string str2 = "测试";
+        std::wcout << utils::utf8_to_wstring(str2) << std::endl;
+    }
+
 }
